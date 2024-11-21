@@ -1,0 +1,31 @@
+# config.yaml
+host_ip:
+  H1_IP: "10.0.0.1"
+  H2_IP: "10.0.0.2"
+  H3_IP: "10.0.0.3"
+  H4_IP: "10.0.0.4"
+  H5_IP: "10.0.0.5"
+  H6_IP: "10.0.0.6"
+  H7_IP: "10.0.0.7"
+  H8_IP: "10.0.0.8"
+  H9_IP: "10.0.0.9"
+
+port:
+  FTP_PORT: 21
+  SSH_PORT: 22
+  TELNET_PORT: 23
+  SMTP_PORT: 25
+  DNS_PORT: 53
+  TFTP_PORT: 69
+  HTTP_PORT: 80
+  POP3_PORT: 110
+  NTP_PORT: 123
+  IMAP_PORT: 143
+  CONTROL_PORT: 6653
+  RANDOM_PORT: 65345
+  DEFAULT_PORT: 32678
+
+attack_settings:
+  DEFAULT:
+    DURATION: 6
+    RATE: 10
