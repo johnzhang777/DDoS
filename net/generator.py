@@ -1,18 +1,58 @@
 from scapy.all import *
 from scapy.layers.inet import *
+from config.config import Config
 import time
 
 class Generator:
-    def __init__(self):
-        # self.src_ip = src_ip
-        # self.dst_ip = dst_ip
-        # self.src_port = src_port
-        # self.dst_port = dst_port
-        # self.attack_duration = attack_duration  # 攻击持续时间（秒）
-        # self.packet_rate = packet_rate  # 每秒发送的包数量
-        # self.packet_count = attack_duration * packet_rate
-        pass
+    def __init__(self, net):
+        net.start()
+    
+        self.h1 = net.get('h1')
+        self.h2 = net.get('h2')
+        self.h3 = net.get('h3')
+        self.h4 = net.get('h4')
+        self.h5 = net.get('h5')
+        self.h6 = net.get('h6')
+        self.h7 = net.get('h7')
+        self.h8 = net.get('h8')
+        self.h9 = net.get('h9')
 
+        self.users = [self.h2, self.h3, self.h4, self.h6, self.h7, self.h8]
+        self.attackers = [self.h1, self.h9]
+        self.victim = [self.h5]
+
+        self.config = Config()
+
+    def normal(self):
+        duration = self.config.get_setting('duration')
+
+        print("Generating traffic ...")    
+        self.victim[0].cmd('cd resources')
+        self.victim[0].cmd('python3 -m http.server 80 &')
+        self.victim[0].cmd('iperf -s -p 5050 &')
+        self.victim[0].cmd('iperf -s -u -p 5051 &')
+        time.sleep(2)
+
+        while 1:    
+            print("--------------------------------------------------------------------------------") 
+            
+            src = choice(self.users)
+            src_ip = src.IP()
+            dst_ip = self.victim[0].IP()
+            
+            src.cmd('cd downloads')
+            src.cmd("ping {} -c 10 &".format(dst_ip))
+            src.cmd("iperf -p 5050 -c {}".format(dst_ip))
+            src.cmd("iperf -p 5051 -u -c 10.0.0.1")
+            
+            print("%s Downloading index.html from victim" % src_ip)
+            src.cmd("wget http://{}/index.html".format(dst_ip))
+            # print("%s Downloading test.zip from victim" % src_ip)
+            # src.cmd("wget http://{}/test.zip".format(dst_ip))
+            
+            # self.victim[0].cmd("rm -rf downloads/*")
+
+            time.sleep(1/duration)
     def send_packet(self, src_ips, dst_ips, src_ports, dst_ports, duration, rate):
         for src_ip, dst_ip, src_port, dst_port in zip(src_ips, dst_ips, src_ports, dst_ports):
             for _ in range(duration * rate):
@@ -31,8 +71,8 @@ class Generator:
                 #     # 等待指定的间隔时间
                 #     time.sleep(interval)
 
-    def normal(self, src_ips, dst_ips, src_ports, dst_ports, duration, rate):
-        self.send_packet(src_ips, dst_ips, src_ports, dst_ports, duration, rate)
+    # def normal(self, src_ips, dst_ips, src_ports, dst_ports, duration, rate):
+    #     self.send_packet(src_ips, dst_ips, src_ports, dst_ports, duration, rate)
 
     def syn_flood(self):
         for _ in range(self.packet_count):

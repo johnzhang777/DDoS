@@ -26,6 +26,8 @@ def normal():
 
 
 if __name__ == '__main__':
+    # 需要进入项目的目录执行main.py
     topo = MyTopo()
-    # topo.run()
-    normal()
+    net = topo.run()
+    generator = Generator(net)
+    generator.normal()
