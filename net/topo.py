@@ -2,6 +2,7 @@ from mininet.topo import Topo
 from mininet.node import RemoteController, OVSKernelSwitch
 from mininet.net import Mininet
 from mininet.cli import CLI
+from mininet.link import TCLink
 from config.config import Config
 
 class MyTopo(Topo):
@@ -48,7 +49,7 @@ class MyTopo(Topo):
 
     
     def run(self):
-        net = Mininet(topo=self, controller=RemoteController('c0', ip='127.0.0.1', port=6653))
+        net = Mininet(topo=self, link=TCLink, controller=RemoteController('c0', ip='127.0.0.1', port=6653))
         net.start()
-        CLI(net)
+        # CLI(net)
         return net

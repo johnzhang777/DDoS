@@ -30,4 +30,9 @@ if __name__ == '__main__':
     topo = MyTopo()
     net = topo.run()
     generator = Generator(net)
+    generator.check_results()
+
     generator.normal()
+    generator.syn_flood()
+
+    net.stop()

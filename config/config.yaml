@@ -40,3 +40,12 @@ traffic_settings:
   DEFAULT:
     DURATION: 6
     RATE: 10
+  LIGHT:
+    DURATION: 6
+    RATE: 100
+  MODERATE:
+    DURATION: 6
+    RATE: 1000
+  SEVERE:
+    DURATION: 6
+    RATE: 10000
