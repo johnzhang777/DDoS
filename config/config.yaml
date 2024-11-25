@@ -10,6 +10,17 @@ host_ip:
   H8_IP: "10.0.0.8"
   H9_IP: "10.0.0.9"
 
+host_mac:
+  H1_MAC: "00:00:00:00:00:01"
+  H2_MAC: "00:00:00:00:00:02"
+  H3_MAC: "00:00:00:00:00:03"
+  H4_MAC: "00:00:00:00:00:04"
+  H5_MAC: "00:00:00:00:00:05"
+  H6_MAC: "00:00:00:00:00:06"
+  H7_MAC: "00:00:00:00:00:07"
+  H8_MAC: "00:00:00:00:00:08"
+  H9_MAC: "00:00:00:00:00:09"
+
 port:
   FTP_PORT: 21
   SSH_PORT: 22
@@ -25,7 +36,16 @@ port:
   RANDOM_PORT: 65345
   DEFAULT_PORT: 32678
 
-attack_settings:
+traffic_settings:
   DEFAULT:
     DURATION: 6
     RATE: 10
+  LIGHT:
+    DURATION: 6
+    RATE: 100
+  MODERATE:
+    DURATION: 6
+    RATE: 1000
+  SEVERE:
+    DURATION: 6
+    RATE: 10000

@@ -21,12 +21,16 @@ class Config:
         # 如果host='hi', 返回Hi_IP
         return ip[host.upper() + '_IP']
     
+    def get_mac(self, host):
+        mac = self.config.get('host_mac')
+        return mac[host.upper() + '_MAC']
+    
     def get_port(self, port_name):
         port = self.config.get('port')
         return port[port_name.upper() + '_PORT']
     
     def get_setting(self, setting, level='default'):
-        attack_setting = self.config.get('attack_settings').get(level.upper())
+        attack_setting = self.config.get('traffic_settings').get(level.upper())
         return attack_setting[setting.upper()]
     
     
