@@ -49,16 +49,18 @@ class Generator:
             src.cmd("hping3 -2 -c 1 -p 5051 {} &".format(dst_ip))
             
             src.cmd("wget http://{}/index.html &".format(dst_ip))
-            
-            src.cmd("rm -rf ./*")
 
             print("cost time {}".format(time.time()-start_time_1))
 
             time.sleep(1/rate)
 
+        src.cmd("killall -9 wget")
+        src.cmd("rm -rf /home/zzy/DDoS/downloads/*")
+
     
 
     def syn_flood(self, level='default'):
+        print("syn flood")
         duration = self.config.get_setting('duration', level=level)
         dst_ip = self.victim[0].IP()
         for attacker in self.attackers:
