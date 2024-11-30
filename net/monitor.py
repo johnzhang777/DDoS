@@ -4,7 +4,7 @@ from ryu.controller.handler import set_ev_cls
 from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
 from ryu.controller import ofp_event
 from ryu.lib import hub
-from switch import SimpleSwitch13
+from controller import SimpleSwitch13
 
 class MyMonitor(SimpleSwitch13):
     def __init__(self, *args, **kwargs):
@@ -73,11 +73,12 @@ class MyMonitor(SimpleSwitch13):
         self.logger.info("%16s %16s %10s %18s %18s %5s %5s %3s %3s %3s %3s %3s" % (
                 "IP Src", "IP Dst", "IP Proto", "Eth Src", "Eth Dst", "Port Src", "Port Dst", "Action Port", "Action Type", "package count", "byte count", "duration"))
 
-        for stat in sorted([flow for flow in body if (flow.priority == 1) ], key=lambda flow:
-            (flow.match['eth_type'], flow.match['ipv4_src'],flow.match['ipv4_dst'],flow.match['ip_proto'])):
+        # for stat in sorted([flow for flow in body if (flow.priority == 1) ], key=lambda flow:
+        #     (flow.match['eth_type'], flow.match['ipv4_src'],flow.match['ipv4_dst'],flow.match['ip_proto'])):
+        for stat in [flow for flow in body if (flow.priority == 1) ]:
         
-            ip_src = stat.match['ipv4_src']
-            ip_dst = stat.match['ipv4_dst']
+            ip_src = stat.match.get('ipv4_src', 'N/A')
+            ip_dst = stat.match.get('ipv4_dst', 'N/A')
             ip_proto = stat.match['ip_proto']
             # eth_type = stat.match['eth_type']
             eth_src = stat.match['eth_src']

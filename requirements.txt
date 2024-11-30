@@ -2,3 +2,4 @@ mininet==2.3.1b4
 scapy==2.4.3
 PyYAML==5.3.1
 ryu==4.30
+pyshark==0.6

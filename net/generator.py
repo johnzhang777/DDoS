@@ -5,7 +5,7 @@ import time
 
 class Generator:
     def __init__(self, net):
-        net.start()
+        # net.start()
     
         self.h1 = net.get('h1')
         self.h2 = net.get('h2')
@@ -54,7 +54,7 @@ class Generator:
 
             time.sleep(1/rate)
 
-        src.cmd("killall -9 wget")
+        # src.cmd("killall -9 wget")
         src.cmd("rm -rf /home/zzy/DDoS/downloads/*")
 
     

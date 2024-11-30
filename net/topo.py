@@ -4,6 +4,7 @@ from mininet.net import Mininet
 from mininet.cli import CLI
 from mininet.link import TCLink
 from config.config import Config
+from net.switch import CustomSwitch
 
 class MyTopo(Topo):
     def __init__(self, *args, **params):
@@ -28,9 +29,9 @@ class MyTopo(Topo):
         h8 = self.addHost('h8', ip=config.get_ip('h8'), mac=config.get_mac('h8'))
         h9 = self.addHost('h9', ip=config.get_ip('h9'), mac=config.get_mac('h9'))
 
-        s1 = self.addSwitch('s1', cls=OVSKernelSwitch, protocols='OpenFlow13')
-        s2 = self.addSwitch('s2', cls=OVSKernelSwitch, protocols='OpenFlow13')
-        s3 = self.addSwitch('s3', cls=OVSKernelSwitch, protocols='OpenFlow13')
+        s1 = self.addSwitch('s1', cls=CustomSwitch, protocols='OpenFlow13')
+        s2 = self.addSwitch('s2', cls=CustomSwitch, protocols='OpenFlow13')
+        s3 = self.addSwitch('s3', cls=CustomSwitch, protocols='OpenFlow13')
 
         self.addLink(h1, s1)
         self.addLink(h2, s1)
