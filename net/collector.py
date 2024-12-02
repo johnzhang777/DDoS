@@ -10,6 +10,7 @@ class PacketCollector:
     def __init__(self):
         self.live_captures = {}
         self.threads = []
+        self.stop_event = threading.Event()
 
     def start_capture(self, interfaces):
         # for interface in interfaces:
@@ -17,9 +18,12 @@ class PacketCollector:
         #     thread = threading.Thread(target=self.sniff_continuously, args=(interface,))
         #     self.threads.append(thread)
         #     thread.start()
-        self.sniff_continuously(interfaces)
+         self.sniff_continuously(interfaces)
 
     def stop_capture(self):
+        # set stop event
+        self.stop_event.set()
+    
         # stop all pyshark captures
         for interface, capture in self.live_captures.items():
             capture.close()
@@ -38,6 +42,8 @@ class PacketCollector:
 
             for packet in capture.sniff_continuously():
                 try:
+                    if self.stop_event.is_set():
+                        break
                     # parse and print packet details
                     packet_info = self.parse_packet(packet)
                     self.log_packet(packet_info, interface)
