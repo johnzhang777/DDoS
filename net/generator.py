@@ -35,7 +35,7 @@ class Generator:
         start_time = time.time()
 
         while time.time() - start_time < duration:    
-            print("-----------------------------------------------------") 
+            print("-----------------------------------") 
             start_time_1 = time.time()
 
             src = choice(self.users)
@@ -50,7 +50,7 @@ class Generator:
             
             src.cmd("wget http://{}/index.html &".format(dst_ip))
 
-            print("cost time {}".format(time.time()-start_time_1))
+            # print("cost time {}".format(time.time()-start_time_1))
 
             time.sleep(1/rate)
 
