@@ -2,6 +2,7 @@
 from mininet.node import OVSSwitch
 from net.collector import PacketCollector
 import threading
+import asyncio
 
 class CustomSwitch(OVSSwitch):
     def __init__(self, name, **params):
@@ -25,6 +26,7 @@ class CustomSwitch(OVSSwitch):
         if self.collector:
             self.collector.stop_capture()
         super(CustomSwitch, self).stop()
+        return self.collector.count
 
 
 # from mininet.node import OVSSwitch

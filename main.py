@@ -1,18 +1,22 @@
 from net.topo import MyTopo
 from net.generator import Generator
 from config.config import Config
-from net.switch import CustomSwitch
 import threading
+import time
+import nest_asyncio
 
-def stop_switches(net, switch_names):
-    for switch_name in switch_names:
-        switch = net.get(switch_name)
-        if switch:
-            switch.stop()
-        else:
-            print(f"Switch {switch_name} not found.")
+def stop_switches(net):
+    count = {}
+    for switch in net.switches:
+        # if hasattr(switch, 'collector'):
+        #     switch.collector.stop_capture()
+        threading.Thread(target=switch.stop).start()
+        # count[switch] = switch.stop()
+    # print(count)
 
 if __name__ == '__main__':
+    
+    # nest_asyncio.apply()
     # 需要进入项目的目录执行main.py
     topo = MyTopo()
     net = topo.run()
@@ -31,10 +35,7 @@ if __name__ == '__main__':
     normal.join()
     syn.join()
 
-    switch_names = ['s1', 's2', 's3']
-    stop_switches(net, switch_names)
-
-    generator.check_results()
-    
+    # time.sleep(60)
+    # stop_switches(net)
 
     net.stop()

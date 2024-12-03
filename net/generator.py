@@ -35,7 +35,7 @@ class Generator:
         start_time = time.time()
 
         while time.time() - start_time < duration:    
-            print("-----------------------------------") 
+            # print("-----------------------------------") 
             start_time_1 = time.time()
 
             src = choice(self.users)

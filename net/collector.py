@@ -2,6 +2,8 @@
 import threading
 from pyshark import LiveCapture
 from mininet.log import info
+import asyncio
+import nest_asyncio
 
 # global lock for thread-safe printing
 output_lock = threading.Lock()
@@ -11,6 +13,7 @@ class PacketCollector:
         self.live_captures = {}
         self.threads = []
         self.stop_event = threading.Event()
+        self.count = 0
 
     def start_capture(self, interfaces):
         # for interface in interfaces:
@@ -20,38 +23,61 @@ class PacketCollector:
         #     thread.start()
          self.sniff_continuously(interfaces)
 
-    def stop_capture(self):
-        # set stop event
-        self.stop_event.set()
+    # def stop_capture(self):
+    #     # set stop event
+    #     self.stop_event.set()
     
-        # stop all pyshark captures
+    #     # stop all pyshark captures
+    #     for interface, capture in self.live_captures.items():
+    #         capture.close_async()
+    #     self.live_captures.clear()
+    #     # wait for all threads to finish
+    #     # for thread in self.threads:
+    #     #     thread.join()
+    #     # self.threads.clear()
+
+    # def stop_capture(self):
+    #     self.stop_event.set()
+    #     for interface, capture in self.live_captures.items():
+    #         try:
+    #             capture.clear()
+    #             capture.close()
+    #         except Exception as e:
+    #             print(f"Error closing capture for {interface}: {e}")
+    #     self.live_captures.clear()
+
+    def stop_capture(self):
+        self.stop_event.set()
+        print(self.live_captures)
         for interface, capture in self.live_captures.items():
-            capture.close()
+            asyncio.run(capture.close())
         self.live_captures.clear()
 
-        # wait for all threads to finish
-        for thread in self.threads:
-            thread.join()
-        self.threads.clear()
 
     def sniff_continuously(self, interface):
         try:
             # create a live capture object
             capture = LiveCapture(interface=interface)
-            # self.live_captures[interface] = capture
+
+            if not isinstance(interface, list):
+                interface = [interface]
+            self.live_captures[interface[0]] = capture
 
             for packet in capture.sniff_continuously():
                 try:
                     if self.stop_event.is_set():
+                        # capture.close()
                         break
-                    # parse and print packet details
                     packet_info = self.parse_packet(packet)
                     self.log_packet(packet_info, interface)
+                    self.count += 1
                 except AttributeError as e:
                     print(f"Error parsing packet: {e}")
         except KeyboardInterrupt:
             print(f"Stopping capture on interface: {interface}")
-            capture.close()
+            self.stop_capture()
+        finally:
+            self.stop_capture()
 
     def parse_packet(self, packet):
         packet_info = {
@@ -60,6 +86,7 @@ class PacketCollector:
             'destination_mac': None,
             'source_ip': None,
             'destination_ip': None,
+            'protocol': None,
             'source_port': None,
             'destination_port': None,
             'tcp_flags': None,
@@ -73,33 +100,28 @@ class PacketCollector:
 
         packet_info['packet_length'] = packet.length
 
-        # 以太网层
         if 'eth' in packet:
             packet_info['source_mac'] = packet.eth.src
             packet_info['destination_mac'] = packet.eth.dst
 
-        # IP 层
         if 'ip' in packet:
             packet_info['source_ip'] = packet.ip.src
             packet_info['destination_ip'] = packet.ip.dst
+            packet_info['protocol'] = packet.ip.proto
 
-        # TCP 层
         if 'tcp' in packet:
             packet_info['source_port'] = packet.tcp.srcport
             packet_info['destination_port'] = packet.tcp.dstport
             packet_info['tcp_flags'] = packet.tcp.flags
 
-        # UDP 层
         if 'udp' in packet:
             packet_info['source_port'] = packet.udp.srcport
             packet_info['destination_port'] = packet.udp.dstport
 
-        # HTTP 层
         if 'http' in packet:
             packet_info['http_request_method'] = packet.http.request_method
             packet_info['http_request_uri'] = packet.http.request_full_uri
 
-        # ICMP 层
         if 'icmp' in packet:
             packet_info['icmp_type'] = packet.icmp.type
             packet_info['icmp_code'] = packet.icmp.code
@@ -117,6 +139,7 @@ class PacketCollector:
             #     if value is not None:
             #         print(f"{key.capitalize().replace('_', ' ')}: {value}")
             print(packet_info)
+            print(self.count)
             print('------------------')
 
 # import threading

@@ -38,7 +38,7 @@ port:
 
 traffic_settings:
   DEFAULT:
-    DURATION: 6
+    DURATION: 0.2
     RATE: 10
   LIGHT:
     DURATION: 6
