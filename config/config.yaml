@@ -49,3 +49,5 @@ traffic_settings:
   SEVERE:
     DURATION: 6
     RATE: 10000
+
+window_size: 100

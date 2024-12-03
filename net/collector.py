@@ -1,6 +1,8 @@
  # log_packet in collector.py
 import threading
 from pyshark import LiveCapture
+from config.config import Config
+from collections import deque
 from mininet.log import info
 import asyncio
 import nest_asyncio
@@ -14,6 +16,9 @@ class PacketCollector:
         self.threads = []
         self.stop_event = threading.Event()
         self.count = 0
+        self.config = Config()
+        self.window_size = self.config.get_window_size()
+        self.packet_window = deque(maxlen=self.window_size)
 
     def start_capture(self, interfaces):
         # for interface in interfaces:
@@ -23,28 +28,6 @@ class PacketCollector:
         #     thread.start()
          self.sniff_continuously(interfaces)
 
-    # def stop_capture(self):
-    #     # set stop event
-    #     self.stop_event.set()
-    
-    #     # stop all pyshark captures
-    #     for interface, capture in self.live_captures.items():
-    #         capture.close_async()
-    #     self.live_captures.clear()
-    #     # wait for all threads to finish
-    #     # for thread in self.threads:
-    #     #     thread.join()
-    #     # self.threads.clear()
-
-    # def stop_capture(self):
-    #     self.stop_event.set()
-    #     for interface, capture in self.live_captures.items():
-    #         try:
-    #             capture.clear()
-    #             capture.close()
-    #         except Exception as e:
-    #             print(f"Error closing capture for {interface}: {e}")
-    #     self.live_captures.clear()
 
     def stop_capture(self):
         self.stop_event.set()
@@ -69,7 +52,13 @@ class PacketCollector:
                         # capture.close()
                         break
                     packet_info = self.parse_packet(packet)
+                    if packet_info is None:
+                        continue
+                    self.packet_window.append(packet_info)
                     self.log_packet(packet_info, interface)
+                    if len(self.packet_window) == self.window_size:
+                        # TODO: 处理窗口数据
+                        self.packet_window.clear()  # 清空窗口以准备接收下一批数据包
                     self.count += 1
                 except AttributeError as e:
                     print(f"Error parsing packet: {e}")
@@ -82,6 +71,7 @@ class PacketCollector:
     def parse_packet(self, packet):
         packet_info = {
             'packet_length': None,
+            'ttl': None,
             'source_mac': None,
             'destination_mac': None,
             'source_ip': None,
@@ -90,12 +80,10 @@ class PacketCollector:
             'source_port': None,
             'destination_port': None,
             'tcp_flags': None,
-            'http_request_method': None,
-            'http_request_uri': None,
+            # 'http_request_method': None,
+            # 'http_request_uri': None,
             'icmp_type': None,
             'icmp_code': None,
-            'icmp_echo_id': None,
-            'icmp_echo_seq': None
         }
 
         packet_info['packet_length'] = packet.length
@@ -108,6 +96,9 @@ class PacketCollector:
             packet_info['source_ip'] = packet.ip.src
             packet_info['destination_ip'] = packet.ip.dst
             packet_info['protocol'] = packet.ip.proto
+            packet_info['ttl'] = packet.ip.ttl
+        else:
+            return None
 
         if 'tcp' in packet:
             packet_info['source_port'] = packet.tcp.srcport
@@ -118,26 +109,19 @@ class PacketCollector:
             packet_info['source_port'] = packet.udp.srcport
             packet_info['destination_port'] = packet.udp.dstport
 
-        if 'http' in packet:
-            packet_info['http_request_method'] = packet.http.request_method
-            packet_info['http_request_uri'] = packet.http.request_full_uri
+        # if 'http' in packet:
+        #     packet_info['http_request_method'] = packet.http.request_method
+        #     packet_info['http_request_uri'] = packet.http.request_full_uri
 
         if 'icmp' in packet:
             packet_info['icmp_type'] = packet.icmp.type
             packet_info['icmp_code'] = packet.icmp.code
-
-            if hasattr(packet.icmp, 'echo'):
-                packet_info['icmp_echo_id'] = packet.icmp.echo.id
-                packet_info['icmp_echo_seq'] = packet.icmp.echo.seq
 
         return packet_info
 
     def log_packet(self, packet_info, interface):
         with output_lock:
             print(f"Packet captured on {interface}:")
-            # for key, value in packet_info.items():
-            #     if value is not None:
-            #         print(f"{key.capitalize().replace('_', ' ')}: {value}")
             print(packet_info)
             print(self.count)
             print('------------------')

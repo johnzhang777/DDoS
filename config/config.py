@@ -33,6 +33,9 @@ class Config:
         attack_setting = self.config.get('traffic_settings').get(level.upper())
         return attack_setting[setting.upper()]
     
+    def get_window_size(self):
+        return self.config.get('window_size')
+    
     
 if __name__ == '__main__':
 
