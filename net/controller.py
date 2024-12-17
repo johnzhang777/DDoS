@@ -18,15 +18,13 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
-from ryu.lib.packet import packet
-from ryu.lib.packet import ethernet
-from ryu.lib.packet import ether_types
+from ryu.lib.packet import packet, ethernet, ether_types
+from ryu.lib.packet import in_proto, ipv4, icmp, tcp, udp
+from config.config import Config
 
-from ryu.lib.packet import in_proto
-from ryu.lib.packet import ipv4
-from ryu.lib.packet import icmp
-from ryu.lib.packet import tcp
-from ryu.lib.packet import udp
+import socket
+import threading
+import json
 
 global FLOW_SERIAL_NO
 FLOW_SERIAL_NO = 0
@@ -43,6 +41,80 @@ class SimpleSwitch13(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
+        self.config = Config()
+        self.server_ip, self.server_port = self.config.get_server()  
+        self.start_socket_server()
+
+    def start_socket_server(self):
+        """启动 Socket 服务器线程"""
+        server_thread = threading.Thread(target=self.socket_server)
+        server_thread.daemon = True  # 后台运行
+        server_thread.start()
+        self.logger.info("Socket server started on port %d", self.server_port)
+
+    def socket_server(self):
+        """Socket 服务器，支持多客户端连接和大数据接收"""
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind((self.server_ip, self.server_port))
+        server_socket.listen(5)
+        self.logger.info("Socket server listening at %s:%d", self.server_ip, self.server_port)
+
+        while True:
+            conn, addr = server_socket.accept()
+            self.logger.info("Connection established with %s", addr)
+
+            # 为每个客户端启动一个独立的线程处理
+            client_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
+            client_thread.daemon = True
+            client_thread.start()
+
+    def handle_client(self, conn: socket.socket, addr):
+        """处理客户端连接，支持持续数据接收"""
+        try:
+            while True:
+                # 读取 4 字节的头部，获取数据长度
+                data_length_bytes = self.recv_all(conn, 4)
+                if not data_length_bytes:
+                    break  # 客户端断开
+
+                data_length = int.from_bytes(data_length_bytes, byteorder='big')
+
+                # 根据数据长度接收完整数据
+                received_data = self.recv_all(conn, data_length)
+                if not received_data:
+                    break  # 客户端断开
+
+                data_str = received_data.decode()
+                data_dict = json.loads(data_str)
+                
+                self.calculate_entropy(data_dict)
+                # self.logger.info("Received data from %s: %s", addr, data_str)
+
+                # 发送回复
+                response = f"Data received from {data_dict['switch']} successfully."
+                conn.sendall(response.encode())
+
+        except Exception as e:
+            self.logger.error("Error with client %s: %s", addr, e)
+        finally:
+            conn.close()
+            self.logger.info("Connection closed with %s", addr)
+
+    def recv_all(self, conn:socket.socket, length):
+        """确保接收指定长度的数据"""
+        data = b""
+        while len(data) < length:
+            chunk = conn.recv(min(1024, length - len(data)))  # 按 1024 字节接收
+            if not chunk:
+                return None  # 客户端断开
+            data += chunk
+        return data
+
+    def calculate_entropy(self, data: dict):
+        switch = data['switch']
+        packets_info = data['packets_info']
+        # TODO 计算熵
+        print(type(packets_info))
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):

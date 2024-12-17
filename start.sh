@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+
 echo "Clean Mininet environment..."
 sudo mn -c
 

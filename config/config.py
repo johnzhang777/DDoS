@@ -36,6 +36,12 @@ class Config:
     def get_window_size(self):
         return self.config.get('window_size')
     
+    def get_server(self):
+        controller = self.config.get('controller')
+        ip = controller.get('SERVER_IP')
+        port = controller.get('SERVER_PORT')
+        return ip, port
+    
     
 if __name__ == '__main__':
 

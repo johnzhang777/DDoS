@@ -51,3 +51,7 @@ traffic_settings:
     RATE: 10000
 
 window_size: 100
+
+controller:
+  SERVER_IP: "127.0.0.1"
+  SERVER_PORT: 12345

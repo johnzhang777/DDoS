@@ -5,7 +5,8 @@ from config.config import Config
 from collections import deque
 from mininet.log import info
 import asyncio
-import nest_asyncio
+import socket
+import json
 
 # global lock for thread-safe printing
 output_lock = threading.Lock()
@@ -18,16 +19,13 @@ class PacketCollector:
         self.count = 0
         self.config = Config()
         self.window_size = self.config.get_window_size()
-        self.packet_window = deque(maxlen=self.window_size)
+        self.packet_window = []
+        self.server_ip, self.server_port = self.config.get_server()  
+        self.client_socket = None
 
     def start_capture(self, interfaces):
-        # for interface in interfaces:
-        #     # create a new thread to handle each interface's capture
-        #     thread = threading.Thread(target=self.sniff_continuously, args=(interface,))
-        #     self.threads.append(thread)
-        #     thread.start()
-         self.sniff_continuously(interfaces)
-
+        self.connect_to_server()
+        self.sniff_continuously(interfaces)
 
     def stop_capture(self):
         self.stop_event.set()
@@ -35,11 +33,23 @@ class PacketCollector:
         for interface, capture in self.live_captures.items():
             asyncio.run(capture.close())
         self.live_captures.clear()
+        self.disconnect_from_server()
 
+    def connect_to_server(self):
+        try:
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.connect((self.server_ip, self.server_port))
+        except Exception as e:
+            print(f"Failed to connect to server: {e}")
+
+    def disconnect_from_server(self):
+        if self.client_socket:
+            self.client_socket.close()
+            self.client_socket = None
+            print("Disconnected from server.")
 
     def sniff_continuously(self, interface):
         try:
-            # create a live capture object
             capture = LiveCapture(interface=interface)
 
             if not isinstance(interface, list):
@@ -49,16 +59,14 @@ class PacketCollector:
             for packet in capture.sniff_continuously():
                 try:
                     if self.stop_event.is_set():
-                        # capture.close()
                         break
                     packet_info = self.parse_packet(packet)
                     if packet_info is None:
                         continue
                     self.packet_window.append(packet_info)
-                    self.log_packet(packet_info, interface)
                     if len(self.packet_window) == self.window_size:
-                        # TODO: 处理窗口数据
-                        self.packet_window.clear()  # 清空窗口以准备接收下一批数据包
+                        self.send_data_to_server(self.packet_window, interface)
+                        self.packet_window.clear()
                     self.count += 1
                 except AttributeError as e:
                     print(f"Error parsing packet: {e}")
@@ -67,6 +75,37 @@ class PacketCollector:
             self.stop_capture()
         finally:
             self.stop_capture()
+
+    def send_data_to_server(self, packet_window, interface):
+        if not self.client_socket:
+            print("Not connected to server.")
+            return
+
+        try:
+            packet_window_json = json.dumps({
+                "switch": interface[0][:2],
+                "packets_info": packet_window
+            })  # 将数据封装为 JSON 格式
+            packet_bytes = packet_window_json.encode()  # 转换为字节流
+
+            # 发送数据的长度（4字节头部表示数据长度）
+            data_length = len(packet_bytes)
+            self.client_socket.sendall(data_length.to_bytes(4, byteorder='big'))  
+
+            # 分块发送大数据
+            chunk_size = 1024
+            for i in range(0, len(packet_bytes), chunk_size):
+                self.client_socket.sendall(packet_bytes[i:i+chunk_size])
+
+            # 接收服务器回复
+            response = self.client_socket.recv(1024)
+            print(f"Received from server: {response.decode()}")
+
+        except Exception as e:
+            print(f"Error while sending data to the server: {e}")
+            self.disconnect_from_server()
+            self.connect_to_server()  # 尝试重新连接服务器
+
 
     def parse_packet(self, packet):
         packet_info = {
@@ -80,8 +119,6 @@ class PacketCollector:
             'source_port': None,
             'destination_port': None,
             'tcp_flags': None,
-            # 'http_request_method': None,
-            # 'http_request_uri': None,
             'icmp_type': None,
             'icmp_code': None,
         }
@@ -108,10 +145,6 @@ class PacketCollector:
         if 'udp' in packet:
             packet_info['source_port'] = packet.udp.srcport
             packet_info['destination_port'] = packet.udp.dstport
-
-        # if 'http' in packet:
-        #     packet_info['http_request_method'] = packet.http.request_method
-        #     packet_info['http_request_uri'] = packet.http.request_full_uri
 
         if 'icmp' in packet:
             packet_info['icmp_type'] = packet.icmp.type
