@@ -5,4 +5,4 @@
 __pycache__/
 
 # 忽略 downloads 目录
-downloads/
+downloads/*s

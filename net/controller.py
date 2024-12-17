@@ -18,6 +18,8 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
+from ryu.ofproto.ofproto_v1_3_parser import OFPExperimenter
+from ryu.controller.ofp_event import EventOFPExperimenter
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
@@ -27,6 +29,11 @@ from ryu.lib.packet import ipv4
 from ryu.lib.packet import icmp
 from ryu.lib.packet import tcp
 from ryu.lib.packet import udp
+
+from ryu.log import logging
+# from tmp import print_readable_data
+
+import json
 
 global FLOW_SERIAL_NO
 FLOW_SERIAL_NO = 0
@@ -43,6 +50,27 @@ class SimpleSwitch13(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
+        # logging.basicConfig(level=logging.INFO)
+        # logger = logging.getLogger()
+        # logger.setLevel(logging.INFO)
+    
+    @set_ev_cls(ofp_event.EventOFPExperimenter, MAIN_DISPATCHER)
+    def handle_experimenter_message(self, ev):
+        print("111")
+        msg = ev.msg
+        data = msg.data
+        experimenter = msg.experimenter
+        exp_type = msg.exp_type
+        
+        try:
+            # 尝试解码并解析JSON数据
+            decoded_data = data.decode('utf-8')
+            parsed_data = json.loads(decoded_data)
+            print(f"Received Experimenter message: {experimenter} {exp_type}")
+            print(f"Parsed Data: {parsed_data}")
+        except (UnicodeDecodeError, json.JSONDecodeError) as e:
+            print(f"Failed to decode or parse data: {e}")
+            print(f"Raw Data: {data}")
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -55,7 +83,8 @@ class SimpleSwitch13(app_manager.RyuApp):
                                           ofproto.OFPCML_NO_BUFFER)]
         flow_serial_no = get_flow_number()
         self.add_flow(datapath, 0, match, actions, flow_serial_no)
-
+        print("000")
+        # print(f"Connected switch with OpenFlow version: 0x{datapath.ofproto.OFP_VERSION:02x}")
     
 
     def add_flow(self, datapath, priority, match, actions, serial_no, buffer_id=None, idletime=0, hardtime=0):
@@ -87,6 +116,8 @@ class SimpleSwitch13(app_manager.RyuApp):
         parser = datapath.ofproto_parser
         in_port = msg.match['in_port']
         length = msg.total_len
+        # print_readable_data(msg.data)
+        print(msg.data)
 
         pkt = packet.Packet(msg.data)
         

@@ -2,7 +2,6 @@
 from mininet.node import OVSSwitch
 from net.collector import PacketCollector
 import threading
-import asyncio
 
 class CustomSwitch(OVSSwitch):
     def __init__(self, name, **params):
