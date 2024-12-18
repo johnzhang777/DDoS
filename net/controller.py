@@ -44,6 +44,7 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.config = Config()
         self.server_ip, self.server_port = self.config.get_server()  
         self.start_socket_server()
+        self.datapaths = {}
 
     def start_socket_server(self):
         """启动 Socket 服务器线程"""
@@ -87,6 +88,7 @@ class SimpleSwitch13(app_manager.RyuApp):
                 data_str = received_data.decode()
                 data_dict = json.loads(data_str)
                 
+                # TODO 封装一个detect类来进行检测
                 self.calculate_entropy(data_dict)
                 # self.logger.info("Received data from %s: %s", addr, data_str)
 
@@ -111,10 +113,14 @@ class SimpleSwitch13(app_manager.RyuApp):
         return data
 
     def calculate_entropy(self, data: dict):
-        switch = data['switch']
-        packets_info = data['packets_info']
-        # TODO 计算熵
-        print(type(packets_info))
+        try:
+            switch = data['switch']
+            packets_info = data['packets_info']
+            # TODO 计算熵
+            print(switch, packets_info[99])
+            # print(type(self.datapaths[1]))
+        except Exception as e:
+            self.logger.error("Error calculating entropy: %s", e)
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -127,8 +133,8 @@ class SimpleSwitch13(app_manager.RyuApp):
                                           ofproto.OFPCML_NO_BUFFER)]
         flow_serial_no = get_flow_number()
         self.add_flow(datapath, 0, match, actions, flow_serial_no)
+        self.datapaths[datapath.id] = datapath
 
-    
 
     def add_flow(self, datapath, priority, match, actions, serial_no, buffer_id=None, idletime=0, hardtime=0):
         ofproto = datapath.ofproto

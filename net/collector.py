@@ -2,8 +2,6 @@
 import threading
 from pyshark import LiveCapture
 from config.config import Config
-from collections import deque
-from mininet.log import info
 import asyncio
 import socket
 import json
