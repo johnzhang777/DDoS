@@ -50,8 +50,11 @@ traffic_settings:
     DURATION: 6
     RATE: 10000
 
-window_size: 100
+window_size: 10
 
 controller:
   SERVER_IP: "127.0.0.1"
   SERVER_PORT: 12345
+
+detector:
+  THRESHOLD: 0.5

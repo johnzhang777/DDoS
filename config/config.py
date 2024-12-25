@@ -42,6 +42,9 @@ class Config:
         port = controller.get('SERVER_PORT')
         return ip, port
     
+    def get_threshold(self):
+        return self.config.get('detector').get('THRESHOLD')
+
     
 if __name__ == '__main__':
 

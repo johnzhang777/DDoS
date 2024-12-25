@@ -21,6 +21,7 @@ from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet, ethernet, ether_types
 from ryu.lib.packet import in_proto, ipv4, icmp, tcp, udp
 from config.config import Config
+from detect.detect import Detector
 
 import socket
 import threading
@@ -45,6 +46,7 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.server_ip, self.server_port = self.config.get_server()  
         self.start_socket_server()
         self.datapaths = {}
+        
 
     def start_socket_server(self):
         """启动 Socket 服务器线程"""
@@ -88,8 +90,9 @@ class SimpleSwitch13(app_manager.RyuApp):
                 data_str = received_data.decode()
                 data_dict = json.loads(data_str)
                 
-                # TODO 封装一个detect类来进行检测
-                self.calculate_entropy(data_dict)
+                # TODO 使用封装的Detector类中的方法来进行检测
+                self.detector = Detector(self.config.get_threshold())
+                self.detector.detect(data_dict)
                 # self.logger.info("Received data from %s: %s", addr, data_str)
 
                 # 发送回复
