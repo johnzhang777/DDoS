@@ -2,12 +2,12 @@
 import threading
 from pyshark import LiveCapture
 from config.config import Config
+from log.log import LoggerConfig
 import asyncio
 import socket
 import json
 import re
 import traceback
-import logging
 
 # global lock for thread-safe printing
 output_lock = threading.Lock()
@@ -23,7 +23,8 @@ class PacketCollector:
         self.packet_window = []
         self.server_ip, self.server_port = self.config.get_server()  
         self.client_socket = None
-        self.logger = logging.getLogger(__name__)
+        self.logger = LoggerConfig.get_logger(__name__)
+        
 
     def start_capture(self, interfaces):
         self.connect_to_server()
@@ -31,7 +32,7 @@ class PacketCollector:
 
     def stop_capture(self):
         self.stop_event.set()
-        print(self.live_captures)
+        self.logger.info(self.live_captures)
         for interface, capture in self.live_captures.items():
             asyncio.run(capture.close())
         self.live_captures.clear()
@@ -42,13 +43,13 @@ class PacketCollector:
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.client_socket.connect((self.server_ip, self.server_port))
         except Exception as e:
-            print(f"Failed to connect to server: {e}")
+            self.logger.error(f"Failed to connect to server: {e}")
 
     def disconnect_from_server(self):
         if self.client_socket:
             self.client_socket.close()
             self.client_socket = None
-            print("Disconnected from server.")
+            self.logger.info("Disconnected from server.")
 
     def sniff_continuously(self, interface):
         try:
@@ -71,16 +72,16 @@ class PacketCollector:
                         self.packet_window.clear()
                     self.count += 1
                 except AttributeError as e:
-                    print(f"Error parsing packet: {e}")
+                    self.logger.error(f"Error parsing packet: {e}")
         except KeyboardInterrupt:
-            print(f"Stopping capture on interface: {interface}")
+            self.logger.error(f"Stopping capture on interface: {interface}")
             self.stop_capture()
         finally:
             self.stop_capture()
 
     def send_data_to_server(self, packet_window, interface):
         if not self.client_socket:
-            print("Not connected to server.")
+            self.logger.warning("Not connected to server.")
             return
 
         try:
@@ -101,10 +102,10 @@ class PacketCollector:
 
             # 接收服务器回复
             response = self.client_socket.recv(1024)
-            print(f"Received from server: {response.decode()}")
+            self.logger.info(f"Received from server: {response.decode()}")
 
         except Exception as e:
-            print(f"Error while sending data to the server: {e}")
+            self.logger.error(f"Error while sending data to the server: {e}")
             self.disconnect_from_server()
             self.connect_to_server()  # 尝试重新连接服务器
 
@@ -170,7 +171,11 @@ class PacketCollector:
                 udp_layer = packet.udp
                 packet_info['source_port']['udp'] = udp_layer.srcport
                 packet_info['destination_port']['udp'] = udp_layer.dstport
-                payload = getattr(packet.data, 'data', 'NormalUDPTraffic')
+                udp_data = getattr(udp_layer, 'data', None)
+                if not udp_data:
+                    payload = "Normal"
+                else:
+                    payload = getattr(udp_data, 'data', 'NormalUDPTraffic')
                 payload = self.decode_payload(payload, "Normal")
 
             if 'icmp' in packet:
@@ -180,26 +185,23 @@ class PacketCollector:
                 payload = getattr(icmp_layer, 'data', 'NormalICMPTraffic')
                 payload = self.decode_payload(payload, "Normal")
 
-            packet_info['flag'] = payload or "Normal"
-
         except AttributeError as ae:
-            print(f"AttributeError while parsing packet: {ae}")
-            packet_info['flag'] = f"AttributeError: {str(ae)}"
+            self.logger.error(f"AttributeError while parsing packet: {ae}")
         except Exception as e:
-            print(f"Unexpected error occurred: {e}")
-            print(traceback.format_exc())
-            packet_info['flag'] = f"UnexpectedError: {str(e)}"
+            self.logger.error(f"Unexpected error occurred: {e}")
+            self.logger.error(traceback.format_exc(), exc_info=True)
 
-        # print(packet_info['flag'])
+        packet_info['flag'] = payload or "Normal"
+        self.logger.info(packet_info['flag'])
         return packet_info
 
 
     def log_packet(self, packet_info, interface):
         with output_lock:
-            print(f"Packet captured on {interface}:")
-            print(packet_info)
-            print(self.count)
-            print('------------------')
+            self.logger.info(f"Packet captured on {interface}:")
+            self.logger.info(packet_info)
+            self.logger.info(self.count)
+            self.logger.info('------------------')
 
 # import threading
 # from pyshark import LiveCapture

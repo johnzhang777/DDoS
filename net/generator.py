@@ -1,6 +1,7 @@
 from scapy.all import *
 from scapy.layers.inet import *
 from config.config import Config
+from log.log import LoggerConfig
 import time
 import threading
 
@@ -25,6 +26,7 @@ class Generator:
         self.config = Config()
 
         self.lock = threading.Lock()
+        self.logger = LoggerConfig.get_logger(__name__)
 
     def normal(self):
         duration = self.config.get_setting('duration')
@@ -63,7 +65,7 @@ class Generator:
     
 
     def syn_flood(self, level='default'):
-        print("syn flood")
+        self.logger.info("syn flood")
         duration = self.config.get_setting('duration', level=level)
         dst_ip = self.victim[0].IP()
         for attacker in self.attackers:

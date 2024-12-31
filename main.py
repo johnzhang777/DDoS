@@ -1,9 +1,10 @@
 from net.topo import MyTopo
 from net.generator import Generator
 from config.config import Config
+from log.log import LoggerConfig
 import threading
-import time
-import nest_asyncio
+import logging
+import os
 
 def stop_switches(net):
     count = {}
@@ -15,9 +16,19 @@ def stop_switches(net):
     # print(count)
 
 if __name__ == '__main__':
+
+    # 删掉./log/mininet.log
+    log_file_path = './log/mininet.log'
+    if os.path.exists(log_file_path):
+        os.remove(log_file_path)
     
-    # nest_asyncio.apply()
-    # 需要进入项目的目录执行main.py
+    
+    # 初始化LoggerConfig类
+    LoggerConfig(log_file='./log/mininet.log', level=logging.INFO, mode='w')
+
+    # 获取logger实例
+    logger = LoggerConfig.get_logger(__name__)
+
     topo = MyTopo()
     net = topo.run()
     generator = Generator(net)
