@@ -5,6 +5,8 @@ from config.config import Config
 import asyncio
 import socket
 import json
+import re
+import traceback
 
 # global lock for thread-safe printing
 output_lock = threading.Lock()
@@ -116,37 +118,77 @@ class PacketCollector:
             'protocol': None,
             'source_port': None,
             'destination_port': None,
+            'flag': None,
             'tcp_flags': None,
             'icmp_type': None,
             'icmp_code': None,
         }
 
-        packet_info['packet_length'] = packet.length
+        try:
+            payload = None
+            packet_info['packet_length'] = packet.length
 
-        if 'eth' in packet:
-            packet_info['source_mac'] = packet.eth.src
-            packet_info['destination_mac'] = packet.eth.dst
+            if 'eth' in packet:
+                packet_info['source_mac'] = packet.eth.src
+                packet_info['destination_mac'] = packet.eth.dst
 
-        if 'ip' in packet:
-            packet_info['source_ip'] = packet.ip.src
-            packet_info['destination_ip'] = packet.ip.dst
-            packet_info['protocol'] = packet.ip.proto
-            packet_info['ttl'] = packet.ip.ttl
-        else:
-            return None
+            if 'ip' in packet:
+                packet_info['source_ip'] = packet.ip.src
+                packet_info['destination_ip'] = packet.ip.dst
+                packet_info['protocol'] = packet.ip.proto
+                packet_info['ttl'] = packet.ip.ttl
+            else:
+                return None
 
-        if 'tcp' in packet:
-            packet_info['source_port'] = packet.tcp.srcport
-            packet_info['destination_port'] = packet.tcp.dstport
-            packet_info['tcp_flags'] = packet.tcp.flags
+            if 'tcp' in packet:
+                packet_info['source_port'] = packet.tcp.srcport
+                packet_info['destination_port'] = packet.tcp.dstport
+                packet_info['tcp_flags'] = packet.tcp.flags
+                try:
+                    payload = getattr(packet.tcp, 'payload', 'NormalTCPTraffic')
+                    if not payload.startswith("Normal"):
+                        payload = bytes.fromhex(payload.replace(':', '')).decode('utf-8', errors='ignore')
+                except Exception as e:
+                    payload = "Normal"
 
-        if 'udp' in packet:
-            packet_info['source_port'] = packet.udp.srcport
-            packet_info['destination_port'] = packet.udp.dstport
+            if 'udp' in packet:
+                packet_info['source_port'] = packet.udp.srcport
+                packet_info['destination_port'] = packet.udp.dstport
+                try:
+                    payload = getattr(packet.data, 'data', None)
+                    if not payload.startswith("Normal"):
+                        payload = bytes.fromhex(payload.replace(':', '')).decode('utf-8', errors='ignore')
+                except Exception as e:
+                    payload = "Normal"
 
-        if 'icmp' in packet:
-            packet_info['icmp_type'] = packet.icmp.type
-            packet_info['icmp_code'] = packet.icmp.code
+            if 'icmp' in packet:
+                packet_info['icmp_type'] = packet.icmp.type
+                packet_info['icmp_code'] = packet.icmp.code
+                try:
+                    payload = getattr(packet.icmp, 'data', 'NormalICMPTraffic')
+                    if not payload.startswith("Normal"):                    
+                        payload = bytes.fromhex(payload.replace(':', '')).decode('utf-8', errors='ignore')
+                except Exception as e:
+                    payload = "Normal"
+                        
+            
+            if payload:
+                try:
+                    match = re.search(r"(\w+)Attack", payload)
+                    if match:
+                        payload = match.group(0)
+
+                    elif not payload.startswith("Normal"):
+                        payload = bytes.fromhex(payload.replace(':', '')).decode('utf-8', errors='ignore')   
+                    
+                except Exception as e:
+                    payload = "NormalTraffic"
+            packet_info['flag'] = payload
+        except AttributeError as ae:
+            print(f"AttributeError while parsing packet: {ae}")
+        except Exception as e:
+            print(f"Unexpected error occurred: {e}")
+            print(traceback.format_exc())
 
         return packet_info
 
