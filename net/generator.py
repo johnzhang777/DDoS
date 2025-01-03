@@ -1,7 +1,9 @@
 from scapy.all import *
 from scapy.layers.inet import *
 from config.config import Config
+from log.log import LoggerConfig
 import time
+import threading
 
 class Generator:
     def __init__(self, net):
@@ -23,6 +25,9 @@ class Generator:
 
         self.config = Config()
 
+        self.lock = threading.Lock()
+        self.logger = LoggerConfig.get_logger(__name__)
+
     def normal(self):
         duration = self.config.get_setting('duration')
         rate = self.config.get_setting('rate')
@@ -43,12 +48,12 @@ class Generator:
             dst_ip = self.victim[0].IP()
             
             src.cmd('cd downloads')
-            src.cmd("ping {} -c 10 &".format(dst_ip))
+            src.cmd("ping {} -c 100 &".format(dst_ip))
             # src.cmd("iperf -p 5050 -c {} &".format(dst_ip))
-            src.cmd("hping3 -S -c 1 -p 5050 {} &".format(dst_ip))
-            src.cmd("hping3 -2 -c 1 -p 5051 {} &".format(dst_ip))
+            src.cmd("hping3 -S -c 1 -e 'NormalTCPTraffic' -p 5050 {} &".format(dst_ip))
+            src.cmd("hping3 -2 -c 1 -e 'NormalUDPTraffic' -p 5051 {} &".format(dst_ip))
             
-            src.cmd("wget http://{}/index.html &".format(dst_ip))
+            # src.cmd("wget http://{}/index.html &".format(dst_ip))
 
             # print("cost time {}".format(time.time()-start_time_1))
 
@@ -60,30 +65,34 @@ class Generator:
     
 
     def syn_flood(self, level='default'):
-        print("syn flood")
+        self.logger.info("syn flood")
         duration = self.config.get_setting('duration', level=level)
         dst_ip = self.victim[0].IP()
         for attacker in self.attackers:
-            attacker.cmd("timeout {}s hping3 -c 99999 -S -V -d 120 -w 64 -p 80 --rand-source --flood {} &".format(duration, dst_ip))
+            with self.lock:
+                attacker.cmd("timeout {}s hping3 -c 99999 -S -V -d 120 -w 64 -p 80 --rand-source --flood -e 'SYNFloodAttack' {} &".format(duration, dst_ip))
         # self.victim[0].cmd("tcpdump -i h5-eth0 -c 1000 -w ./packets.pcap")
 
     def udp_flood(self, level='default'):
         duration = self.config.get_setting('duration', level=level)
         dst_ip = self.victim[0].IP()
         for attacker in self.attackers:
-            attacker.cmd("timeout {}s hping3 -2 -V -d 120 -w 64 --rand-source --flood {} &".format(duration, dst_ip))
+            with self.lock:
+                attacker.cmd("timeout {}s hping3 -2 -V -d 120 -w 64 --rand-source --flood -e 'UDPFloodAttack' {} &".format(duration, dst_ip))
 
     def icmp_flood(self, level='default'):
         duration = self.config.get_setting('duration', level=level)
         dst_ip = self.victim[0].IP()
         for attacker in self.attackers:
-            attacker.cmd("timeout {}s hping3 -1 -V -d 120 -w 64 --rand-source --flood {} &".format(duration, dst_ip))
+            with self.lock:
+                attacker.cmd("timeout {}s hping3 -1 -V -d 120 -w 64 --rand-source --flood -e 'ICMPFloodAttack' {} &".format(duration, dst_ip))
 
     def ack_flood(self, level='default'):
         duration = self.config.get_setting('duration', level=level)
         dst_ip = self.victim[0].IP()
         for attacker in self.attackers:
-            attacker.cmd("timeout {}s hping3 -A -V -d 120 -w 64 --rand-source --flood {} &".format(duration, dst_ip))
+            with self.lock:
+                attacker.cmd("timeout {}s hping3 -A -V -d 120 -w 64 --rand-source --flood -e 'ACKFloodAttack' {} &".format(duration, dst_ip))
 
     def check_results(self):
         victim = self.victim[0]

@@ -21,7 +21,7 @@ from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet, ethernet, ether_types
 from ryu.lib.packet import in_proto, ipv4, icmp, tcp, udp
 from config.config import Config
-from detect.detect import Detector
+from log.log import LoggerConfig
 
 import socket
 import threading
@@ -46,7 +46,7 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.server_ip, self.server_port = self.config.get_server()  
         self.start_socket_server()
         self.datapaths = {}
-        
+        self.logger = LoggerConfig.get_logger(__name__)
 
     def start_socket_server(self):
         """启动 Socket 服务器线程"""
@@ -120,7 +120,7 @@ class SimpleSwitch13(app_manager.RyuApp):
             switch = data['switch']
             packets_info = data['packets_info']
             # TODO 计算熵
-            print(switch, packets_info[99])
+            self.logger.info(switch, packets_info[99])
             # print(type(self.datapaths[1]))
         except Exception as e:
             self.logger.error("Error calculating entropy: %s", e)

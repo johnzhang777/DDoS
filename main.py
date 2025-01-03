@@ -1,9 +1,10 @@
 from net.topo import MyTopo
 from net.generator import Generator
 from config.config import Config
+from log.log import LoggerConfig
 import threading
-import time
-import nest_asyncio
+import logging
+import os
 
 def stop_switches(net):
     count = {}
@@ -15,25 +16,48 @@ def stop_switches(net):
     # print(count)
 
 if __name__ == '__main__':
+
+    log_file_path = './log/mininet.log'
+    if os.path.exists(log_file_path):
+        os.remove(log_file_path)
     
-    # nest_asyncio.apply()
-    # 需要进入项目的目录执行main.py
+    
+    # 初始化LoggerConfig类
+    LoggerConfig(log_file='./log/mininet.log', level=logging.INFO, mode='w')
+
+    # 获取logger实例
+    logger = LoggerConfig.get_logger(__name__)
+
     topo = MyTopo()
     net = topo.run()
     generator = Generator(net)
     generator.check_results()
 
-    # 创建线程
-    normal = threading.Thread(target=generator.normal)
-    syn = threading.Thread(target=generator.syn_flood)
+    if True:
+        # 创建线程
+        normal = threading.Thread(target=generator.normal)
+        syn = threading.Thread(target=generator.syn_flood)
+        icmp = threading.Thread(target=generator.icmp_flood)
+        ack = threading.Thread(target=generator.ack_flood)
+        udp = threading.Thread(target=generator.udp_flood)
 
-    # 启动线程
-    normal.start()
-    syn.start()
+        # 启动线程
+        normal.start()
+        syn.start()
+        icmp.start()
+        ack.start()
+        udp.start()
 
-    # 等待线程完成
-    normal.join()
-    syn.join()
+        # 等待线程完成
+        normal.join()
+        syn.join()
+        icmp.join()
+        ack.join()
+        udp.join()
+    else:
+        normal = threading.Thread(target=generator.normal)
+        normal.start()
+        normal.join()
 
     # time.sleep(60)
     # stop_switches(net)
