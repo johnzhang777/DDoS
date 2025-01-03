@@ -38,17 +38,17 @@ port:
 
 traffic_settings:
   DEFAULT:
-    DURATION: 0.2
-    RATE: 10
-  LIGHT:
     DURATION: 6
     RATE: 100
+  LIGHT:
+    DURATION: 6
+    RATE: 200
   MODERATE:
     DURATION: 6
-    RATE: 1000
+    RATE: 300
   SEVERE:
     DURATION: 6
-    RATE: 10000
+    RATE: 400
 
 window_size: 10
 

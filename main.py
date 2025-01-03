@@ -36,30 +36,18 @@ if __name__ == '__main__':
     if True:
         # 创建线程
         normal = threading.Thread(target=generator.normal)
-        syn = threading.Thread(target=generator.syn_flood)
-        icmp = threading.Thread(target=generator.icmp_flood)
-        ack = threading.Thread(target=generator.ack_flood)
-        udp = threading.Thread(target=generator.udp_flood)
+        attack = threading.Thread(target=generator.attack)
 
         # 启动线程
         normal.start()
-        syn.start()
-        icmp.start()
-        ack.start()
-        udp.start()
+        attack.start()
 
         # 等待线程完成
         normal.join()
-        syn.join()
-        icmp.join()
-        ack.join()
-        udp.join()
+        attack.join()
     else:
         normal = threading.Thread(target=generator.normal)
         normal.start()
         normal.join()
-
-    # time.sleep(60)
-    # stop_switches(net)
 
     net.stop()

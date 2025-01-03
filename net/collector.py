@@ -134,9 +134,7 @@ class PacketCollector:
             'source_port': {},
             'destination_port': {},
             'flag': None,
-            'tcp_flags': None,
-            'icmp_type': None,
-            'icmp_code': None,
+            'tcp_flags': None
         }
 
         try:
@@ -178,12 +176,12 @@ class PacketCollector:
                     payload = getattr(udp_data, 'data', 'NormalUDPTraffic')
                 payload = self.decode_payload(payload, "Normal")
 
-            if 'icmp' in packet:
-                icmp_layer = packet.icmp
-                packet_info['icmp_type'] = icmp_layer.type
-                packet_info['icmp_code'] = icmp_layer.code
-                payload = getattr(icmp_layer, 'data', 'NormalICMPTraffic')
-                payload = self.decode_payload(payload, "Normal")
+            # if 'icmp' in packet:
+            #     icmp_layer = packet.icmp
+            #     packet_info['icmp_type'] = icmp_layer.type
+            #     packet_info['icmp_code'] = icmp_layer.code
+            #     payload = getattr(icmp_layer, 'data', 'NormalICMPTraffic')
+            #     payload = self.decode_payload(payload, "Normal")
 
         except AttributeError as ae:
             self.logger.error(f"AttributeError while parsing packet: {ae}")
@@ -192,7 +190,7 @@ class PacketCollector:
             self.logger.error(traceback.format_exc(), exc_info=True)
 
         packet_info['flag'] = payload or "Normal"
-        self.logger.info(packet_info['flag'])
+        # self.logger.info(packet_info['flag'])
         return packet_info
 
 

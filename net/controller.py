@@ -22,6 +22,7 @@ from ryu.lib.packet import packet, ethernet, ether_types
 from ryu.lib.packet import in_proto, ipv4, icmp, tcp, udp
 from config.config import Config
 from log.log import LoggerConfig
+from detect.detect import Detector
 
 import socket
 import threading
@@ -92,8 +93,8 @@ class SimpleSwitch13(app_manager.RyuApp):
                 
                 # TODO 使用封装的Detector类中的方法来进行检测
                 self.detector = Detector(self.config.get_threshold())
-                self.detector.detect(data_dict)
-                # self.logger.info("Received data from %s: %s", addr, data_str)
+                # self.detector.detect(data_dict)
+                self.logger.warning("Received data from %s: %s", addr, data_str)
 
                 # 发送回复
                 response = f"Data received from {data_dict['switch']} successfully."
@@ -114,16 +115,6 @@ class SimpleSwitch13(app_manager.RyuApp):
                 return None  # 客户端断开
             data += chunk
         return data
-
-    def calculate_entropy(self, data: dict):
-        try:
-            switch = data['switch']
-            packets_info = data['packets_info']
-            # TODO 计算熵
-            self.logger.info(switch, packets_info[99])
-            # print(type(self.datapaths[1]))
-        except Exception as e:
-            self.logger.error("Error calculating entropy: %s", e)
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
