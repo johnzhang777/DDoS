@@ -3,10 +3,12 @@ import numpy as np
 from collections import Counter
 from typing import List, Dict
 from itertools import combinations
+from utils.clean import clean_pkt_info
 
 class Detector:
     def __init__(self, threshold):
         self.threshold = threshold
+        self.columns = ["source_ip", "destination_ip", "source_port", "destination_port", "protocol", "packet_length", "ttl"]
 
     def calculate_entropy(self, column_pair, data: List[str]) -> float:
         """
@@ -27,7 +29,7 @@ class Detector:
         counter = Counter(pair_data)
         probabilities = [count / total for count in counter.values()]
         entropy = -sum(p * math.log2(p) for p in probabilities)
-        print(data)
+        # print(pair_data)
         if len(counter) == 1:
             return 0.0
         return entropy / math.log2(len(counter))
@@ -74,7 +76,7 @@ class Detector:
         sorted_pairs = sorted(diff_pairs.items(), key=lambda x: x[1], reverse=True)
         return sorted_pairs
     
-    def find_key_pair(self):
+    def find_key_pair(self, data):
         """
         找到熵值差异最大的字段对。
         
@@ -86,11 +88,11 @@ class Detector:
         """
         # 计算正常流量的所有字段对的熵
         print("For Normal Traffic:")
-        entropies_normal = self.calculate_entropies_for_all_pairs("COLUMNS", label=0)
+        entropies_normal = self.calculate_entropies_for_all_pairs(self.columns, label=0)
 
         # 计算攻击流量的所有字段对的熵
         print("For Attack Traffic:")
-        entropies_attack = self.calculate_entropies_for_all_pairs("COLUMNS", label=1)
+        entropies_attack = self.calculate_entropies_for_all_pairs(self.columns, label=1)
 
         # 按熵值差异排序字段对
         sorted_pairs = self.sort_entropy_diff_pairs(entropies_normal, entropies_attack)
@@ -131,10 +133,17 @@ class Detector:
         if not packets_info:
             print(f"[{switch}] No packets to analyze.")
             return False
+        
+        cleaned_packets_info = clean_pkt_info(packets_info)
 
-        key_pair = self.find_key_pair()
-        print(key_pair)
-        entropy_values = self.calculate_entropy(key_pair)
-        print(entropy_values)
-        detect_result = self.detect_entropy_anomaly(entropy_values)
+        # key_pair = self.find_key_pair(cleaned_packets_info)
+        # print(key_pair)
+        key_pair = ['destination_ip']
+        entropy_value = self.calculate_entropy(key_pair, cleaned_packets_info)
+        print(entropy_value)
+        # detect_result = self.detect_entropy_anomaly(entropy_values)
+        if entropy_value > self.threshold:
+            print(f"Detect result is Normal")
+        else:
+            print(f"Detect result is Attack")
     

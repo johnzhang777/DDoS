@@ -93,8 +93,8 @@ class SimpleSwitch13(app_manager.RyuApp):
                 
                 # TODO 使用封装的Detector类中的方法来进行检测
                 self.detector = Detector(self.config.get_threshold())
-                # self.detector.detect(data_dict)
-                self.logger.warning("Received data from %s: %s", addr, data_str)
+                self.detector.detect(data_dict)
+                # self.logger.warning("Received data from %s: %s", addr, data_str)
 
                 # 发送回复
                 response = f"Data received from {data_dict['switch']} successfully."

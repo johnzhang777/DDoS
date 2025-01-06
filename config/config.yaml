@@ -50,7 +50,7 @@ traffic_settings:
     DURATION: 6
     RATE: 400
 
-window_size: 10
+window_size: 100
 
 controller:
   SERVER_IP: "127.0.0.1"

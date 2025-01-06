@@ -1,26 +1,42 @@
 from IPy import IP
+def clean_pkt_info(pkt_info: list):
+    cleaned_pkt_info = []
+    for pkt in pkt_info:
+        pkt_new = {}
+        # handle ip
+        pkt_new['source_ip'] = int(IP(pkt['source_ip']).int())
+        pkt_new['destination_ip'] = int(IP(pkt['destination_ip']).int())
 
-class Clean:
+        # handle port
+        pkt_new['source_port'] = int(next(iter(pkt['source_port'].values()))) if pkt['source_port'] else 0
+        pkt_new['destination_port'] = int(next(iter(pkt['destination_port'].values()))) if pkt['destination_port'] else 0
 
-    def handle_ip(data):
-        '''
-            convert IP addresses to integers
-        '''
+        # handle protocol
+        pkt_new['protocol'] = int(pkt['protocol'])
 
-        # Function to check if string is a MAC address
-        def is_mac_address(addr):
-            # MAC address format: xx:xx:xx:xx:xx:xx
-            return len(addr.split(':')) == 6 and all(len(x) == 2 for x in addr.split(':'))
+        # handle packet size
+        pkt_new['packet_length'] = int(pkt['packet_length'])
 
-        # Remove rows with MAC addresses
-        data = data[~data['srcip'].apply(is_mac_address)]
-        data = data[~data['dstip'].apply(is_mac_address)]
+        # handle ttl
+        pkt_new['ttl'] = int(pkt['ttl'])
 
-        # Convert remaining valid IP addresses to integers
-        data['srcip'] = data['source_ip'].apply(lambda x: int(IP(x).int()))
-        data['dstip'] = data['destination_ip'].apply(lambda x: int(IP(x).int()))
+        # handle tcp flags
+        if hasattr(pkt, 'tcp_flags'):  # 修正为正确的 hasattr 方法
+            try:
+                # 尝试将 tcp_flags 转换为整数，假设可能是16进制字符串
+                pkt_new['tcp_flags'] = int(pkt['tcp_flags'], 16) if isinstance(pkt['tcp_flags'], str) else int(pkt['tcp_flags'])
+            except (ValueError, TypeError):
+                # 如果转换失败，设置默认值为0
+                pkt_new['tcp_flags'] = 0
+        else:
+            pkt_new['tcp_flags'] = 0
 
-        return data
+        # handle flag
+        if pkt['flag'].startswith("Normal"):
+            pkt_new['flag'] = 0
+        else:
+            pkt_new['flag'] = 1
 
-    def clean_pkt_info(self, pkt_info: list):
-        pass
+        cleaned_pkt_info.append(pkt_new)
+
+    return cleaned_pkt_info
