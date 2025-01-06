@@ -21,22 +21,24 @@ def clean_pkt_info(pkt_info: list):
         pkt_new['ttl'] = int(pkt['ttl'])
 
         # handle tcp flags
-        if hasattr(pkt, 'tcp_flags'):  # 修正为正确的 hasattr 方法
+        # print(pkt['tcp_flags'])
+        if pkt['tcp_flags']:  # 检查是否有 tcp_flags 属性
             try:
-                # 尝试将 tcp_flags 转换为整数，假设可能是16进制字符串
-                pkt_new['tcp_flags'] = int(pkt['tcp_flags'], 16) if isinstance(pkt['tcp_flags'], str) else int(pkt['tcp_flags'])
-            except (ValueError, TypeError):
-                # 如果转换失败，设置默认值为0
+                # 获取 tcp_flags 的实际值
+                if not isinstance(pkt['tcp_flags'], str):
+                    # 尝试从 LayerFieldsContainer 中提取值
+                    tcp_flags_value = str(pkt['tcp_flags'])
+                else:
+                    tcp_flags_value = pkt['tcp_flags']
+
+                # 转换为整数
+                pkt_new['tcp_flags'] = int(tcp_flags_value, 16) if isinstance(tcp_flags_value, str) else int(tcp_flags_value)
+            except Exception as e:
+                # 如果转换失败，设置默认值为 0
+                print("Error: Invalid tcp_flags value:", e)
                 pkt_new['tcp_flags'] = 0
         else:
             pkt_new['tcp_flags'] = 0
-
-        # handle flag
-        if pkt['flag'].startswith("Normal"):
-            pkt_new['flag'] = 0
-        else:
-            pkt_new['flag'] = 1
-
         cleaned_pkt_info.append(pkt_new)
 
     return cleaned_pkt_info
