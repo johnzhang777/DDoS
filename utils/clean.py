@@ -22,11 +22,10 @@ def clean_pkt_info(pkt_info: list):
 
         # handle tcp flags
         # print(pkt['tcp_flags'])
-        if pkt['tcp_flags']:  # 检查是否有 tcp_flags 属性
+        if pkt.get('tcp_flags') != None:
             try:
                 # 获取 tcp_flags 的实际值
                 if not isinstance(pkt['tcp_flags'], str):
-                    # 尝试从 LayerFieldsContainer 中提取值
                     tcp_flags_value = str(pkt['tcp_flags'])
                 else:
                     tcp_flags_value = pkt['tcp_flags']

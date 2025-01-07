@@ -27,7 +27,7 @@ class NormalProfile:
         averaged_grouped = {'-'.join(key): np.mean(values) for key, values in grouped.items()}
         return averaged_grouped
 
-    def get_data(self):
+    def get_normal_proflie(self):
         entropy = []
         packet_info = []
         total_count = 0
@@ -51,12 +51,13 @@ class NormalProfile:
         
         entropy = self.group_values_by_key(entropy)
         print(entropy)
+        return entropy
 
             
             
 if __name__ == '__main__':
     profile = NormalProfile()
-    profile.get_data()
+    profile.get_normal_proflie()
 
 
-{"packet_length-ttl": 0.8805413854818477, "packet_length-source_ip": 0.910432297601756, "packet_length-destination_ip": 0.9197720729497592, "packet_length-protocol": 0.6104253514000283, "packet_length-source_port": 0.9089701033222819, "packet_length-destination_port": 0.9093792731111171, "packet_length-tcp_flags": 0.6104253514000283, "ttl-source_ip": 0.8993997859079629, "ttl-destination_ip": 0.907130989657589, "ttl-protocol": 0.8667802613569597, "ttl-source_port": 0.9035573593189246, "ttl-destination_port": 0.9005845606347723, "ttl-tcp_flags": 0.8667802613569597, "source_ip-destination_ip": 0.9089536125491463, "source_ip-protocol": 0.8965259421064122, "source_ip-source_port": 0.9052276388477765, "source_ip-destination_port": 0.9043632115305212, "source_ip-tcp_flags": 0.8965259421064122, "destination_ip-protocol": 0.9045112855751625, "destination_ip-source_port": 0.9094374095383435, "destination_ip-destination_port": 0.9099976334381554, "destination_ip-tcp_flags": 0.9045112855751625, "protocol-source_port": 0.8677049903147281, "protocol-destination_port": 0.8687703060303582, "protocol-tcp_flags": 0.0, "source_port-destination_port": 0.9116092443560311, "source_port-tcp_flags": 0.8677049903147281, "destination_port-tcp_flags": 0.8687703060303582}
+# {"packet_length-ttl": 0.8805413854818477, "packet_length-source_ip": 0.910432297601756, "packet_length-destination_ip": 0.9197720729497592, "packet_length-protocol": 0.6104253514000283, "packet_length-source_port": 0.9089701033222819, "packet_length-destination_port": 0.9093792731111171, "packet_length-tcp_flags": 0.6104253514000283, "ttl-source_ip": 0.8993997859079629, "ttl-destination_ip": 0.907130989657589, "ttl-protocol": 0.8667802613569597, "ttl-source_port": 0.9035573593189246, "ttl-destination_port": 0.9005845606347723, "ttl-tcp_flags": 0.8667802613569597, "source_ip-destination_ip": 0.9089536125491463, "source_ip-protocol": 0.8965259421064122, "source_ip-source_port": 0.9052276388477765, "source_ip-destination_port": 0.9043632115305212, "source_ip-tcp_flags": 0.8965259421064122, "destination_ip-protocol": 0.9045112855751625, "destination_ip-source_port": 0.9094374095383435, "destination_ip-destination_port": 0.9099976334381554, "destination_ip-tcp_flags": 0.9045112855751625, "protocol-source_port": 0.8677049903147281, "protocol-destination_port": 0.8687703060303582, "protocol-tcp_flags": 0.0, "source_port-destination_port": 0.9116092443560311, "source_port-tcp_flags": 0.8677049903147281, "destination_port-tcp_flags": 0.8687703060303582}
