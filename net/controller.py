@@ -47,6 +47,7 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.server_ip, self.server_port = self.config.get_server()  
         self.start_socket_server()
         self.datapaths = {}
+        self.detector = Detector(self.config.get_threshold())
         self.logger = LoggerConfig.get_logger(__name__)
 
     def start_socket_server(self):
@@ -91,8 +92,6 @@ class SimpleSwitch13(app_manager.RyuApp):
                 data_str = received_data.decode()
                 data_dict = json.loads(data_str)
                 
-                # TODO 使用封装的Detector类中的方法来进行检测
-                self.detector = Detector(self.config.get_threshold())
                 self.detector.detect(data_dict)
                 # self.logger.warning("Received data from %s: %s", addr, data_str)
 

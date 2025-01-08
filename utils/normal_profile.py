@@ -24,7 +24,7 @@ class NormalProfile:
                 grouped[key].append(value)
         
         # 计算每个键对应的列表的平均值
-        averaged_grouped = {'-'.join(key): np.mean(values) for key, values in grouped.items()}
+        averaged_grouped = {key: round(np.mean(values), 2) for key, values in grouped.items()}
         return averaged_grouped
 
     def get_normal_proflie(self):
