@@ -14,6 +14,7 @@ class CustomSwitch(OVSSwitch):
         super(CustomSwitch, self).start(*args, **kwargs)
 
         interfaces = [intf.name for intf in self.intfs.values() if intf.name != 'lo']
+        interfaces = ['s2-eth2']
 
         # 创建线程
         capture = threading.Thread(target=self.collector.start_capture, args=(interfaces,))

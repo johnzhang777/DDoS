@@ -5,6 +5,7 @@ from log.log import LoggerConfig
 import threading
 import logging
 import os
+import time
 
 def stop_switches(net):
     count = {}
@@ -30,8 +31,8 @@ if __name__ == '__main__':
 
     topo = MyTopo()
     net = topo.run()
+    time.sleep(2)
     generator = Generator(net)
-    generator.check_results()
 
     if True:
         # 创建线程
@@ -50,4 +51,4 @@ if __name__ == '__main__':
         normal.start()
         normal.join()
 
-    net.stop()
+    # net.stop()

